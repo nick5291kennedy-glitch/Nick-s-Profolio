@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+
+# Local config
+config/email.env
+
+# Runtime and generated data
+logs/
+output/
+reports/
+briefings/
+tmp/
+latest_summary.md
+latest_summary.txt
+
+# macOS
+.DS_Store
+
+# Build artifacts
+dist/
+
+# Local launchd copies
+*.plist.bak

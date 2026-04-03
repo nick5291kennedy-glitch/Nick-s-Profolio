@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Market Intelligence Dashboard</title>
+    <meta name="theme-color" content="#005d7a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Market Dashboard" />
+    <meta name="description" content="Market intelligence dashboard with rankings, technical analysis, and daily summaries." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Market Intelligence Dashboard</p>
+          <h1>Live signals, ranked setups, deeper chart context.</h1>
+          <p class="intro">
+            Track your watchlist with transparent scoring, multi-timeframe trend
+            analysis, support and resistance context, news alignment, and
+            practical setup notes.
+          </p>
+        </div>
+
+        <div class="hero-panel">
+          <p class="panel-label">Coverage</p>
+          <div class="hero-grid">
+            <div>
+              <p class="mini-label">Watchlist</p>
+              <p>ONDO, LINK, BTC, ETH, CCJ, ACHR, ASTS, UNH</p>
+            </div>
+            <div>
+              <p class="mini-label">Tabs</p>
+              <p>Dashboard and Recommendations</p>
+            </div>
+            <div>
+              <p class="mini-label">Data</p>
+              <p>Yahoo Finance and Google News RSS</p>
+            </div>
+            <div>
+              <p class="mini-label">Run local</p>
+              <p><code>python3 server.py</code></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="toolbar card">
+        <div>
+          <p class="section-label">Status</p>
+          <p id="last-updated" class="meta-copy">Loading live market data...</p>
+        </div>
+
+        <label class="search-field" for="asset-search">
+          <span>Search assets</span>
+          <input id="asset-search" type="search" placeholder="BTC, Ethereum, Archer..." />
+        </label>
+
+        <div class="tab-row" role="tablist" aria-label="Views">
+          <button id="tab-dashboard" class="tab-button is-active" type="button" role="tab" aria-selected="true">
+            Dashboard
+          </button>
+          <button id="tab-recommendations" class="tab-button" type="button" role="tab" aria-selected="false">
+            Recommendations
+          </button>
+        </div>
+
+        <div id="market-filters" class="filter-row" aria-label="Asset type filters"></div>
+      </section>
+
+      <section class="overview-grid">
+        <article class="stat-card card">
+          <p class="section-label">Assets</p>
+          <strong id="asset-count" class="stat-value">--</strong>
+          <p class="stat-copy">Tracked across crypto and public equities.</p>
+        </article>
+
+        <article class="stat-card card">
+          <p class="section-label">Positive Tilt</p>
+          <strong id="positive-count" class="stat-value">--</strong>
+          <p class="stat-copy">Assets with stronger bullish than bearish evidence.</p>
+        </article>
+
+        <article class="stat-card card">
+          <p class="section-label">Headlines</p>
+          <strong id="headline-count" class="stat-value">--</strong>
+          <p class="stat-copy">Recent headlines included in the current run.</p>
+        </article>
+      </section>
+
+      <section id="dashboard-view" class="view-panel">
+        <section class="assets">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Dashboard</p>
+              <h2>Multi-timeframe market scan</h2>
+            </div>
+            <p id="status" class="status-copy">Building the latest view.</p>
+          </div>
+
+          <div id="asset-grid" class="asset-grid" aria-live="polite"></div>
+        </section>
+      </section>
+
+      <section id="recommendations-view" class="view-panel" hidden>
+        <section class="recommendations">
+          <div class="section-heading">
+            <div>
+              <p class="section-label">Recommendations</p>
+              <h2>Ranked watchlist setups</h2>
+            </div>
+            <p id="recommendations-status" class="status-copy">
+              Ranking watchlist assets with transparent scoring.
+            </p>
+          </div>
+
+          <div id="recommendation-summary" class="recommendation-summary"></div>
+          <div id="recommendation-list" class="recommendation-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <template id="asset-template">
+      <article class="asset-card card">
+        <div class="asset-header">
+          <div>
+            <div class="asset-topline">
+              <span class="asset-tag" data-field="type"></span>
+              <span class="asset-ticker" data-field="ticker"></span>
+            </div>
+            <h3 data-field="name"></h3>
+          </div>
+          <div class="price-block">
+            <strong data-field="price"></strong>
+            <p data-field="priceMeta"></p>
+          </div>
+        </div>
+
+        <p data-field="assetNotice" class="asset-notice" hidden></p>
+
+        <div class="metric-grid">
+          <div class="metric-chip">
+            <span>1D</span>
+            <strong data-field="dailyChange"></strong>
+          </div>
+          <div class="metric-chip">
+            <span>1W</span>
+            <strong data-field="weeklyChange"></strong>
+          </div>
+          <div class="metric-chip">
+            <span>1M</span>
+            <strong data-field="monthlyChange"></strong>
+          </div>
+          <div class="metric-chip metric-chip-wide">
+            <span>Recommendation</span>
+            <strong data-field="recommendationLabel"></strong>
+          </div>
+        </div>
+
+        <div class="analysis-strip" data-field="analysisStrip"></div>
+        <div class="chart-grid" data-field="chartGrid"></div>
+
+        <div class="signal-grid">
+          <section class="signal-panel bullish">
+            <p class="signal-label">Bullish signals</p>
+            <ul data-field="bullishSignals"></ul>
+          </section>
+
+          <section class="signal-panel bearish">
+            <p class="signal-label">Bearish signals</p>
+            <ul data-field="bearishSignals"></ul>
+          </section>
+        </div>
+
+        <section class="summary-panel">
+          <p class="signal-label">Neutral summary</p>
+          <p data-field="summary" class="summary-copy"></p>
+        </section>
+
+        <section class="news-panel">
+          <div class="chart-label-row">
+            <p>Top recent headlines</p>
+            <span data-field="newsSourceCount"></span>
+          </div>
+          <div data-field="newsList" class="news-list"></div>
+        </section>
+
+        <button class="detail-button" data-field="openDetail" type="button">Open detailed view</button>
+      </article>
+    </template>
+
+    <template id="recommendation-template">
+      <article class="recommendation-card card">
+        <div class="recommendation-header">
+          <div>
+            <div class="asset-topline">
+              <span class="asset-tag" data-field="type"></span>
+              <span class="asset-ticker" data-field="ticker"></span>
+            </div>
+            <h3 data-field="name"></h3>
+          </div>
+          <div class="recommendation-score">
+            <strong data-field="score"></strong>
+            <p data-field="scoreMeta"></p>
+          </div>
+        </div>
+
+        <div class="recommendation-meta" data-field="metaStrip"></div>
+        <div class="breakdown-grid" data-field="breakdown"></div>
+
+        <section class="recommendation-text-grid">
+          <article class="summary-panel">
+            <p class="signal-label">Key reasons</p>
+            <ul data-field="keyReasons"></ul>
+          </article>
+          <article class="summary-panel">
+            <p class="signal-label">Invalidate / risk</p>
+            <ul data-field="risks"></ul>
+          </article>
+          <article class="summary-panel">
+            <p class="signal-label">Strengthens</p>
+            <ul data-field="strengthen"></ul>
+          </article>
+          <article class="summary-panel">
+            <p class="signal-label">Weakens</p>
+            <ul data-field="weaken"></ul>
+          </article>
+        </section>
+
+        <button class="detail-button" data-field="openDetail" type="button">Open detailed view</button>
+      </article>
+    </template>
+
+    <div id="detail-modal" class="modal-shell" hidden>
+      <div id="modal-backdrop" class="modal-backdrop"></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button id="modal-close" class="modal-close" type="button" aria-label="Close detail view">
+          Close
+        </button>
+
+        <div class="modal-header">
+          <div class="asset-topline">
+            <span id="modal-type" class="asset-tag"></span>
+            <span id="modal-ticker" class="asset-ticker"></span>
+          </div>
+          <h3 id="modal-title"></h3>
+          <p id="modal-summary" class="summary-copy"></p>
+        </div>
+
+        <div class="modal-grid">
+          <article class="modal-block">
+            <p class="signal-label">Recommendation</p>
+            <p id="modal-recommendation"></p>
+            <p id="modal-confidence" class="summary-copy"></p>
+          </article>
+
+          <article class="modal-block">
+            <p class="signal-label">Trend directions</p>
+            <div id="modal-trends" class="analysis-strip"></div>
+          </article>
+
+          <article class="modal-block">
+            <p class="signal-label">Technical read</p>
+            <div id="modal-technical" class="detail-list"></div>
+          </article>
+
+          <article class="modal-block">
+            <p class="signal-label">Bullish scenario</p>
+            <p id="modal-bullish-scenario"></p>
+          </article>
+
+          <article class="modal-block">
+            <p class="signal-label">Bearish scenario</p>
+            <p id="modal-bearish-scenario"></p>
+          </article>
+
+          <article class="modal-block modal-block-wide">
+            <p class="signal-label">Scoring breakdown</p>
+            <div id="modal-breakdown" class="breakdown-grid"></div>
+          </article>
+
+          <article class="modal-block modal-block-wide">
+            <p class="signal-label">Recent headlines</p>
+            <div id="modal-news" class="news-list"></div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>

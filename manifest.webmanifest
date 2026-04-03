@@ -1,0 +1,27 @@
+{
+  "name": "Market Intelligence Dashboard",
+  "short_name": "Market Dashboard",
+  "description": "Watchlist dashboard with ranked recommendations, chart analysis, and synced summaries.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eff4f8",
+  "theme_color": "#005d7a",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
