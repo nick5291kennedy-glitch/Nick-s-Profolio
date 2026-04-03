@@ -3,12 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Market Intelligence Dashboard</title>
+    <title>Market Dashboard</title>
     <meta name="theme-color" content="#005d7a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Market Dashboard" />
-    <meta name="description" content="Market intelligence dashboard with rankings, technical analysis, and daily summaries." />
+    <meta
+      name="description"
+      content="Market dashboard with live prices, chart analysis, and ranked recommendations."
+    />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/icon-180.png" />
     <link rel="stylesheet" href="./styles.css" />
@@ -17,24 +20,23 @@
     <main class="app-shell">
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Market Intelligence Dashboard</p>
-          <h1>Live signals, ranked setups, deeper chart context.</h1>
+          <p class="eyebrow">Market Dashboard</p>
+          <h1>Market Dashboard</h1>
           <p class="intro">
-            Track your watchlist with transparent scoring, multi-timeframe trend
-            analysis, support and resistance context, news alignment, and
-            practical setup notes.
+            Live watchlist tracking with technical analysis, ranked setups, and
+            recent headlines.
           </p>
         </div>
 
         <div class="hero-panel">
-          <p class="panel-label">Coverage</p>
+          <p class="panel-label">Quick Access</p>
           <div class="hero-grid">
             <div>
-              <p class="mini-label">Watchlist</p>
+              <p class="mini-label">Assets</p>
               <p>ONDO, LINK, BTC, ETH, CCJ, ACHR, ASTS, UNH</p>
             </div>
             <div>
-              <p class="mini-label">Tabs</p>
+              <p class="mini-label">Views</p>
               <p>Dashboard and Recommendations</p>
             </div>
             <div>
@@ -42,19 +44,14 @@
               <p>Yahoo Finance and Google News RSS</p>
             </div>
             <div>
-              <p class="mini-label">Run local</p>
-              <p><code>python3 server.py</code></p>
+              <p class="mini-label">Status</p>
+              <p id="last-updated" class="meta-copy">Loading live market data...</p>
             </div>
           </div>
         </div>
       </section>
 
       <section class="toolbar card">
-        <div>
-          <p class="section-label">Status</p>
-          <p id="last-updated" class="meta-copy">Loading live market data...</p>
-        </div>
-
         <label class="search-field" for="asset-search">
           <span>Search assets</span>
           <input id="asset-search" type="search" placeholder="BTC, Ethereum, Archer..." />
@@ -76,19 +73,19 @@
         <article class="stat-card card">
           <p class="section-label">Assets</p>
           <strong id="asset-count" class="stat-value">--</strong>
-          <p class="stat-copy">Tracked across crypto and public equities.</p>
+          <p class="stat-copy">Tracked watchlist names.</p>
         </article>
 
         <article class="stat-card card">
           <p class="section-label">Positive Tilt</p>
           <strong id="positive-count" class="stat-value">--</strong>
-          <p class="stat-copy">Assets with stronger bullish than bearish evidence.</p>
+          <p class="stat-copy">Assets with stronger bullish evidence.</p>
         </article>
 
         <article class="stat-card card">
           <p class="section-label">Headlines</p>
           <strong id="headline-count" class="stat-value">--</strong>
-          <p class="stat-copy">Recent headlines included in the current run.</p>
+          <p class="stat-copy">Recent stories used in the current run.</p>
         </article>
       </section>
 
@@ -97,7 +94,7 @@
           <div class="section-heading">
             <div>
               <p class="section-label">Dashboard</p>
-              <h2>Multi-timeframe market scan</h2>
+              <h2>Watchlist Overview</h2>
             </div>
             <p id="status" class="status-copy">Building the latest view.</p>
           </div>
@@ -111,7 +108,7 @@
           <div class="section-heading">
             <div>
               <p class="section-label">Recommendations</p>
-              <h2>Ranked watchlist setups</h2>
+              <h2>Ranked Setups</h2>
             </div>
             <p id="recommendations-status" class="status-copy">
               Ranking watchlist assets with transparent scoring.
