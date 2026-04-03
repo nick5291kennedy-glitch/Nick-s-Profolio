@@ -3,11 +3,11 @@
   "trailingSlash": false,
   "routes": [
     {
-      "src": "/api/dashboard",
-      "dest": "/api/dashboard.py"
+      "handle": "filesystem"
     },
     {
-      "handle": "filesystem"
+      "src": "/api/dashboard",
+      "dest": "/api/dashboard.py"
     },
     {
       "src": "/",
