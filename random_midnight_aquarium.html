@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Midnight Aquarium</title>
+  <style>
+    :root {
+      --bg-top: #07111f;
+      --bg-bottom: #03101a;
+      --panel: rgba(7, 24, 38, 0.72);
+      --line: rgba(168, 244, 255, 0.22);
+      --foam: #dbfbff;
+      --mint: #93ffd8;
+      --aqua: #61d8ff;
+      --gold: #ffd27a;
+      --rose: #ff98b8;
+      --ink: #eafcff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(97, 216, 255, 0.16), transparent 30%),
+        radial-gradient(circle at 80% 25%, rgba(255, 152, 184, 0.12), transparent 26%),
+        radial-gradient(circle at 50% 120%, rgba(147, 255, 216, 0.16), transparent 38%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.09;
+      background-image:
+        radial-gradient(circle at 10% 20%, white 0.6px, transparent 0.8px),
+        radial-gradient(circle at 70% 30%, white 0.6px, transparent 0.8px),
+        radial-gradient(circle at 30% 80%, white 0.6px, transparent 0.8px),
+        radial-gradient(circle at 80% 70%, white 0.6px, transparent 0.8px);
+      background-size: 180px 180px;
+      animation: drift 18s linear infinite;
+    }
+
+    .scene {
+      position: relative;
+      min-height: 100vh;
+      isolation: isolate;
+    }
+
+    .moon {
+      position: absolute;
+      top: 5vh;
+      right: 8vw;
+      width: 13rem;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 35%, rgba(255,255,255,0.95), rgba(255,255,255,0.35) 45%, transparent 65%),
+        radial-gradient(circle at 60% 60%, rgba(97,216,255,0.55), transparent 68%);
+      filter: blur(0.2px);
+      box-shadow: 0 0 80px rgba(97, 216, 255, 0.38);
+      opacity: 0.9;
+    }
+
+    .title-card {
+      position: absolute;
+      top: 8vh;
+      left: 6vw;
+      width: min(38rem, 86vw);
+      padding: 1.4rem 1.5rem 1.55rem;
+      border: 1px solid var(--line);
+      border-radius: 1.5rem;
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(2.5rem, 5vw, 4.8rem);
+      line-height: 0.95;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 31rem;
+      color: rgba(234, 252, 255, 0.84);
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 0.78rem 1.05rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .hud {
+      position: absolute;
+      right: 6vw;
+      bottom: 8vh;
+      width: min(19rem, 84vw);
+      padding: 1rem 1.05rem;
+      border: 1px solid var(--line);
+      border-radius: 1.25rem;
+      background: rgba(6, 20, 31, 0.66);
+      backdrop-filter: blur(14px);
+    }
+
+    .hud-label {
+      margin: 0 0 0.35rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(234, 252, 255, 0.66);
+    }
+
+    .fortune {
+      margin: 0;
+      line-height: 1.55;
+      font-size: 1rem;
+    }
+
+    .aquarium {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .fish,
+    .bubble,
+    .sparkle,
+    .jelly {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .fish {
+      width: 7rem;
+      height: 3.2rem;
+      animation: swim linear infinite;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.22));
+    }
+
+    .fish .body {
+      position: absolute;
+      inset: 0.35rem 1.2rem 0.35rem 0;
+      border-radius: 60% 45% 50% 55%;
+      background: linear-gradient(135deg, var(--fish-a), var(--fish-b));
+    }
+
+    .fish .tail {
+      position: absolute;
+      right: 0;
+      top: 0.75rem;
+      width: 1.8rem;
+      height: 1.6rem;
+      background: linear-gradient(135deg, var(--fish-b), transparent 78%);
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+    }
+
+    .fish .eye {
+      position: absolute;
+      left: 0.95rem;
+      top: 1.15rem;
+      width: 0.48rem;
+      height: 0.48rem;
+      border-radius: 50%;
+      background: #03101a;
+      box-shadow: 0 0 0 0.15rem rgba(255,255,255,0.75);
+    }
+
+    .fish.reverse {
+      transform: scaleX(-1);
+    }
+
+    .jelly {
+      width: 5rem;
+      height: 8rem;
+      animation: floatUp linear infinite;
+      opacity: 0.9;
+    }
+
+    .jelly .cap {
+      width: 5rem;
+      height: 3.5rem;
+      border-radius: 60% 60% 30% 30%;
+      background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(97,216,255,0.24));
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: inset 0 -10px 25px rgba(255,255,255,0.08);
+    }
+
+    .jelly .legs {
+      position: absolute;
+      top: 2.8rem;
+      left: 0.85rem;
+      display: flex;
+      gap: 0.38rem;
+    }
+
+    .jelly .legs span {
+      width: 0.28rem;
+      height: 4rem;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.7), transparent);
+      animation: wiggle 2.4s ease-in-out infinite;
+    }
+
+    .bubble {
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      border: 1px solid rgba(219, 251, 255, 0.4);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.72), rgba(255,255,255,0.08) 55%, transparent 70%);
+      animation: rise var(--duration) linear forwards;
+    }
+
+    .sparkle {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 0 15px rgba(255,255,255,0.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .seabed {
+      position: absolute;
+      inset: auto 0 0;
+      height: 26vh;
+      background:
+        radial-gradient(circle at 15% 30%, rgba(147,255,216,0.12), transparent 18%),
+        radial-gradient(circle at 80% 40%, rgba(255,210,122,0.12), transparent 18%),
+        linear-gradient(180deg, transparent, rgba(2, 8, 14, 0.75) 20%, rgba(2, 8, 14, 0.96));
+    }
+
+    .coral {
+      position: absolute;
+      bottom: 0;
+      width: 10rem;
+      height: 12rem;
+      opacity: 0.88;
+      filter: blur(0.1px);
+    }
+
+    .coral::before,
+    .coral::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 1.35rem;
+      border-radius: 999px 999px 0 0;
+      background: linear-gradient(180deg, var(--coral-top), var(--coral-bottom));
+      transform-origin: bottom center;
+    }
+
+    .coral::before {
+      left: 3rem;
+      height: 11rem;
+      transform: rotate(-12deg);
+      box-shadow:
+        2rem -2rem 0 -0.05rem var(--coral-top),
+        -2rem -1.2rem 0 -0.08rem var(--coral-bottom),
+        3rem -4.8rem 0 -0.1rem var(--coral-bottom);
+    }
+
+    .coral::after {
+      left: 5rem;
+      height: 8rem;
+      transform: rotate(14deg);
+      box-shadow:
+        1.8rem -2.4rem 0 -0.1rem var(--coral-top),
+        -2.2rem -3rem 0 -0.1rem var(--coral-top);
+    }
+
+    @keyframes swim {
+      from {
+        transform: translateX(-10vw) translateY(0) scale(var(--flip, 1));
+      }
+      to {
+        transform: translateX(120vw) translateY(var(--drift)) scale(var(--flip, 1));
+      }
+    }
+
+    @keyframes floatUp {
+      from {
+        transform: translateY(100vh);
+      }
+      to {
+        transform: translateY(-20vh);
+      }
+    }
+
+    @keyframes rise {
+      0% {
+        transform: translateY(0) scale(0.9);
+        opacity: 0;
+      }
+      15% {
+        opacity: 0.95;
+      }
+      100% {
+        transform: translateY(-115vh) translateX(var(--shift)) scale(1.15);
+        opacity: 0;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 0.25;
+        transform: scale(0.8);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+    }
+
+    @keyframes wiggle {
+      0%, 100% {
+        transform: rotate(-5deg);
+      }
+      50% {
+        transform: rotate(6deg);
+      }
+    }
+
+    @keyframes drift {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(-22px);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .title-card {
+        top: 4vh;
+      }
+
+      .hud {
+        right: 4vw;
+        left: 4vw;
+        width: auto;
+        bottom: 4vh;
+      }
+
+      .moon {
+        width: 9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <div class="grain"></div>
+    <div class="moon"></div>
+
+    <section class="title-card">
+      <h1>Midnight Aquarium</h1>
+      <p class="subtitle">
+        A tiny dreamlike ocean. Click anywhere to release bubbles, or ask the aquarium for a new strange little fortune.
+      </p>
+      <div class="controls">
+        <button id="fortuneButton">New fortune</button>
+        <button id="burstButton">Bubble burst</button>
+      </div>
+    </section>
+
+    <aside class="hud">
+      <p class="hud-label">Tonight's Message</p>
+      <p class="fortune" id="fortuneText">A gentle current is already moving your best idea closer to shore.</p>
+    </aside>
+
+    <div class="aquarium" id="aquarium"></div>
+    <div class="seabed">
+      <div class="coral" style="left: 4vw; --coral-top:#ff98b8; --coral-bottom:#a9376d;"></div>
+      <div class="coral" style="left: 22vw; width: 8rem; height: 9rem; --coral-top:#ffd27a; --coral-bottom:#c5841d;"></div>
+      <div class="coral" style="right: 18vw; --coral-top:#93ffd8; --coral-bottom:#2e9e7d;"></div>
+      <div class="coral" style="right: 4vw; width: 8rem; height: 10rem; --coral-top:#61d8ff; --coral-bottom:#216d91;"></div>
+    </div>
+  </div>
+
+  <script>
+    const aquarium = document.getElementById("aquarium");
+    const fortuneText = document.getElementById("fortuneText");
+    const fortuneButton = document.getElementById("fortuneButton");
+    const burstButton = document.getElementById("burstButton");
+
+    const fortunes = [
+      "A gentle current is already moving your best idea closer to shore.",
+      "Something small and glowing is worth following tonight.",
+      "You do not need a map when curiosity is already steering.",
+      "What feels random now may turn out to be excellent timing.",
+      "Leave room for one impractical idea. It may be the lucky one.",
+      "The next good thing might arrive disguised as a detour.",
+      "You are allowed to build beautiful things for no reason at all."
+    ];
+
+    const fishColors = [
+      ["#61d8ff", "#157bb2"],
+      ["#ffd27a", "#ff8b4d"],
+      ["#93ffd8", "#2cae95"],
+      ["#ff98b8", "#cc5681"]
+    ];
+
+    function makeFish(index) {
+      const fish = document.createElement("div");
+      fish.className = "fish" + (Math.random() > 0.5 ? " reverse" : "");
+      const colors = fishColors[index % fishColors.length];
+      fish.style.setProperty("--fish-a", colors[0]);
+      fish.style.setProperty("--fish-b", colors[1]);
+      fish.style.left = `${-10 - Math.random() * 30}vw`;
+      fish.style.top = `${16 + Math.random() * 54}vh`;
+      fish.style.animationDuration = `${18 + Math.random() * 22}s`;
+      fish.style.animationDelay = `${-Math.random() * 20}s`;
+      fish.style.setProperty("--drift", `${-20 + Math.random() * 40}px`);
+      fish.style.setProperty("--flip", fish.classList.contains("reverse") ? "-1" : "1");
+      fish.innerHTML = '<div class="body"></div><div class="tail"></div><div class="eye"></div>';
+      aquarium.appendChild(fish);
+    }
+
+    function makeJelly(index) {
+      const jelly = document.createElement("div");
+      jelly.className = "jelly";
+      jelly.style.left = `${6 + index * 18 + Math.random() * 8}vw`;
+      jelly.style.animationDuration = `${20 + Math.random() * 14}s`;
+      jelly.style.animationDelay = `${-Math.random() * 18}s`;
+      jelly.style.opacity = `${0.5 + Math.random() * 0.4}`;
+      jelly.innerHTML = `
+        <div class="cap"></div>
+        <div class="legs">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      `;
+      aquarium.appendChild(jelly);
+    }
+
+    function makeSparkle() {
+      const sparkle = document.createElement("div");
+      sparkle.className = "sparkle";
+      sparkle.style.left = `${Math.random() * 100}vw`;
+      sparkle.style.top = `${Math.random() * 100}vh`;
+      sparkle.style.animationDelay = `${Math.random() * 2}s`;
+      aquarium.appendChild(sparkle);
+    }
+
+    function releaseBubble(x, y, count = 1) {
+      for (let i = 0; i < count; i += 1) {
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        const size = 8 + Math.random() * 28;
+        bubble.style.setProperty("--size", `${size}px`);
+        bubble.style.setProperty("--duration", `${5 + Math.random() * 5}s`);
+        bubble.style.setProperty("--shift", `${-40 + Math.random() * 80}px`);
+        bubble.style.left = `${x + (Math.random() * 40 - 20)}px`;
+        bubble.style.top = `${y + (Math.random() * 24 - 12)}px`;
+        aquarium.appendChild(bubble);
+        bubble.addEventListener("animationend", () => bubble.remove());
+      }
+    }
+
+    function setFortune() {
+      const next = fortunes[Math.floor(Math.random() * fortunes.length)];
+      fortuneText.textContent = next;
+    }
+
+    for (let i = 0; i < 11; i += 1) {
+      makeFish(i);
+    }
+
+    for (let i = 0; i < 5; i += 1) {
+      makeJelly(i);
+    }
+
+    for (let i = 0; i < 28; i += 1) {
+      makeSparkle();
+    }
+
+    aquarium.addEventListener("click", (event) => {
+      releaseBubble(event.clientX, event.clientY, 8);
+    });
+
+    burstButton.addEventListener("click", () => {
+      const centerX = window.innerWidth * (0.25 + Math.random() * 0.5);
+      const centerY = window.innerHeight * (0.35 + Math.random() * 0.35);
+      releaseBubble(centerX, centerY, 18);
+      setFortune();
+    });
+
+    fortuneButton.addEventListener("click", setFortune);
+
+    window.addEventListener("load", () => {
+      for (let i = 0; i < 20; i += 1) {
+        releaseBubble(window.innerWidth * (0.08 + Math.random() * 0.84), window.innerHeight * (0.75 + Math.random() * 0.15), 1);
+      }
+    });
+  </script>
+</body>
+</html>

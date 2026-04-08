@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tiny Planet Foundry</title>
+  <style>
+    :root {
+      --bg-1: #090815;
+      --bg-2: #131531;
+      --bg-3: #281e44;
+      --panel: rgba(13, 16, 34, 0.68);
+      --panel-line: rgba(197, 233, 255, 0.18);
+      --text: #edf7ff;
+      --muted: rgba(237, 247, 255, 0.7);
+      --accent: #8be0ff;
+      --accent-2: #ffc68d;
+      --accent-3: #b99bff;
+      --planet-core: #66b8ff;
+      --planet-shadow: #2845a8;
+      --planet-glow: rgba(139, 224, 255, 0.34);
+      --band-1: rgba(255, 255, 255, 0.18);
+      --band-2: rgba(9, 9, 20, 0.16);
+      --ring: rgba(255, 228, 169, 0.8);
+      --sky-haze: rgba(133, 113, 255, 0.22);
+      --moon: #f0d9ff;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 12%, rgba(139, 224, 255, 0.14), transparent 20%),
+        radial-gradient(circle at 80% 20%, rgba(255, 198, 141, 0.12), transparent 24%),
+        radial-gradient(circle at 50% 85%, rgba(185, 155, 255, 0.16), transparent 24%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2) 45%, #090912);
+    }
+
+    canvas#stars {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .layout {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-line);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      border-radius: 2rem;
+      padding: 1.5rem 1.6rem 1.8rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: auto auto -5rem -5rem;
+      width: 14rem;
+      height: 14rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(139,224,255,0.14), transparent 70%);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.7rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.9rem, 5vw, 5.5rem);
+      line-height: 0.92;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      max-width: 9ch;
+    }
+
+    .subtext {
+      margin: 0.9rem 0 0;
+      max-width: 32rem;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 1.03rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      margin-top: 1.4rem;
+    }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font: inherit;
+      padding: 0.85rem 1.15rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .signature {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 1.1rem;
+      color: rgba(237, 247, 255, 0.84);
+      font-size: 0.95rem;
+    }
+
+    .signature::before {
+      content: "";
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 18px rgba(139, 224, 255, 0.5);
+    }
+
+    .planet-stage {
+      position: relative;
+      border-radius: 2rem;
+      min-height: 32rem;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 50% 36%, var(--sky-haze), transparent 32%),
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+    }
+
+    .planet-wrap {
+      position: relative;
+      width: min(34rem, 78vw);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .planet {
+      position: relative;
+      width: min(21rem, 54vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 24%),
+        radial-gradient(circle at 65% 70%, rgba(0,0,0,0.22), transparent 28%),
+        linear-gradient(160deg, var(--planet-core), var(--planet-shadow));
+      box-shadow:
+        inset -1.7rem -2rem 2.8rem rgba(0, 0, 0, 0.24),
+        inset 1.4rem 1rem 2rem rgba(255,255,255,0.16),
+        0 0 5rem var(--planet-glow);
+      overflow: hidden;
+      animation: rotatePlanet 22s linear infinite;
+    }
+
+    .planet::before,
+    .planet::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      mix-blend-mode: screen;
+    }
+
+    .planet::before {
+      background:
+        linear-gradient(180deg, transparent 8%, var(--band-1) 18%, transparent 30%, var(--band-2) 42%, transparent 56%, var(--band-1) 67%, transparent 82%);
+      opacity: 0.9;
+      transform: rotate(-14deg) scale(1.15);
+    }
+
+    .planet::after {
+      background:
+        radial-gradient(circle at 28% 62%, rgba(255,255,255,0.2), transparent 10%),
+        radial-gradient(circle at 74% 28%, rgba(255,255,255,0.18), transparent 8%),
+        radial-gradient(circle at 55% 48%, rgba(0,0,0,0.14), transparent 14%);
+    }
+
+    .ring-back,
+    .ring-front {
+      position: absolute;
+      width: 28rem;
+      height: 8rem;
+      border-radius: 50%;
+      border: 0.55rem solid var(--ring);
+      transform: rotate(-12deg);
+      opacity: 0.85;
+      filter: drop-shadow(0 0 18px rgba(255, 228, 169, 0.2));
+    }
+
+    .ring-back {
+      clip-path: inset(0 0 50% 0);
+    }
+
+    .ring-front {
+      clip-path: inset(50% 0 0 0);
+    }
+
+    .moon {
+      position: absolute;
+      width: 1.3rem;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, white, var(--moon));
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.26);
+    }
+
+    .moon.a {
+      top: 22%;
+      left: 18%;
+      animation: driftA 10s ease-in-out infinite;
+    }
+
+    .moon.b {
+      top: 67%;
+      right: 14%;
+      width: 0.95rem;
+      animation: driftB 8s ease-in-out infinite;
+    }
+
+    .orbit {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      width: 31rem;
+      height: 31rem;
+      transform: translate(-50%, -50%);
+      animation: orbitSpin 28s linear infinite;
+    }
+
+    .satellite {
+      position: absolute;
+      top: 1.8rem;
+      left: 50%;
+      width: 0.7rem;
+      height: 0.7rem;
+      margin-left: -0.35rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-2), white);
+      box-shadow: 0 0 15px rgba(255, 198, 141, 0.5);
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      align-content: start;
+    }
+
+    .info {
+      border-radius: 1.6rem;
+      padding: 1.25rem 1.15rem;
+    }
+
+    .info h2,
+    .log h2 {
+      margin: 0 0 0.9rem;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(237, 247, 255, 0.9);
+    }
+
+    .planet-name {
+      margin: 0 0 0.4rem;
+      font-size: clamp(1.6rem, 2vw, 2.25rem);
+      letter-spacing: 0.03em;
+    }
+
+    .planet-type {
+      margin: 0 0 0.95rem;
+      color: var(--accent);
+      font-size: 0.98rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .planet-desc {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      min-height: 5.8rem;
+    }
+
+    .stats {
+      display: grid;
+      gap: 0.85rem;
+    }
+
+    .stat {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(237, 247, 255, 0.68);
+    }
+
+    .meter {
+      position: relative;
+      height: 0.7rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+    }
+
+    .meter span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 50%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 18px rgba(139,224,255,0.25);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .chip {
+      padding: 0.48rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(237,247,255,0.9);
+      font-size: 0.92rem;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .log {
+      grid-column: 1 / -1;
+      border-radius: 1.6rem;
+      padding: 1.25rem 1.15rem;
+    }
+
+    .transmission {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.75;
+      color: rgba(237,247,255,0.92);
+      min-height: 7rem;
+    }
+
+    .mini-note {
+      margin-top: 0.7rem;
+      color: rgba(237,247,255,0.66);
+      font-size: 0.92rem;
+    }
+
+    @keyframes rotatePlanet {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes orbitSpin {
+      from {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+      to {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    @keyframes driftA {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-14px) scale(1.08);
+      }
+    }
+
+    @keyframes driftB {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(10px) scale(0.94);
+      }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .planet-stage {
+        min-height: 28rem;
+      }
+
+      .readout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <main class="layout">
+    <section class="hero panel">
+      <div>
+        <p class="eyebrow">Procedural Observatory</p>
+        <h1>Tiny Planet Foundry</h1>
+        <p class="subtext">
+          A little machine for inventing impossible worlds. Every generation builds a new planet name, a fresh atmosphere,
+          questionable science, and a tiny myth that sounds almost true.
+        </p>
+        <div class="controls">
+          <button id="generateButton">Forge another planet</button>
+          <button id="shuffleSkyButton">Shuffle the starfield</button>
+        </div>
+      </div>
+      <p class="signature">Field notes from the friendly edge of nowhere</p>
+    </section>
+
+    <section class="planet-stage panel">
+      <div class="planet-wrap">
+        <div class="orbit">
+          <div class="satellite"></div>
+        </div>
+        <div class="ring-back" id="ringBack"></div>
+        <div class="planet" id="planet"></div>
+        <div class="ring-front" id="ringFront"></div>
+        <div class="moon a" id="moonA"></div>
+        <div class="moon b" id="moonB"></div>
+      </div>
+    </section>
+
+    <section class="readout">
+      <article class="info panel">
+        <h2>World Profile</h2>
+        <p class="planet-name" id="planetName">Vesper-9</p>
+        <p class="planet-type" id="planetType">Aurora Ocean World</p>
+        <p class="planet-desc" id="planetDescription">
+          A slow-turning sphere wrapped in pale ion storms, where tides glow brighter than the local sunrise.
+        </p>
+      </article>
+
+      <article class="info panel">
+        <h2>Readings</h2>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Gravity</span>
+            <div class="meter"><span id="gravityMeter"></span></div>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Weather</span>
+            <div class="meter"><span id="weatherMeter"></span></div>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Mystery</span>
+            <div class="meter"><span id="mysteryMeter"></span></div>
+          </div>
+        </div>
+        <p class="mini-note" id="readingsText">Gravity: gentle enough for long jumps. Weather: dramatic but photogenic.</p>
+      </article>
+
+      <article class="info panel">
+        <h2>Surface Traits</h2>
+        <div class="chips" id="traits"></div>
+      </article>
+
+      <article class="info panel">
+        <h2>Warnings</h2>
+        <div class="chips" id="warnings"></div>
+      </article>
+
+      <article class="log panel">
+        <h2>Transmission</h2>
+        <p class="transmission" id="transmission">
+          The locals claim the horizon hums before every storm, as if the planet is tuning itself for company.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const planet = document.getElementById("planet");
+    const ringFront = document.getElementById("ringFront");
+    const ringBack = document.getElementById("ringBack");
+    const moonA = document.getElementById("moonA");
+    const moonB = document.getElementById("moonB");
+    const planetName = document.getElementById("planetName");
+    const planetType = document.getElementById("planetType");
+    const planetDescription = document.getElementById("planetDescription");
+    const readingsText = document.getElementById("readingsText");
+    const transmission = document.getElementById("transmission");
+    const traits = document.getElementById("traits");
+    const warnings = document.getElementById("warnings");
+    const gravityMeter = document.getElementById("gravityMeter");
+    const weatherMeter = document.getElementById("weatherMeter");
+    const mysteryMeter = document.getElementById("mysteryMeter");
+    const generateButton = document.getElementById("generateButton");
+    const shuffleSkyButton = document.getElementById("shuffleSkyButton");
+    const canvas = document.getElementById("stars");
+    const ctx = canvas.getContext("2d");
+
+    const nameLeft = ["Vesper", "Cinder", "Velum", "Morrow", "Lucent", "Sable", "Echo", "Iris", "Drift", "Solace", "Gilded", "Blueglass"];
+    const nameRight = ["-9", "-IV", " Delta", " Prime", " Hollow", " Arc", " Minor", " Reach", " Bloom", " Vale", " Static", " Wake"];
+    const types = ["Aurora Ocean World", "Glass Desert Moon", "Moss Giant", "Clockwork Storm Planet", "Velvet Ring World", "Ember Tundra Sphere", "Coral Sky Colony", "Noctilucent Archive"];
+    const traitsPool = ["floating reefs", "violet rain", "singing ice", "amber fungi", "tidal mirrors", "magnetic dunes", "orbital gardens", "paper-thin canyons", "lantern forests", "soft gravity", "crystal fog"];
+    const warningsPool = ["time slips at dawn", "storms attract compasses", "moonlight causes sleepwalking", "low valleys echo future weather", "radio static mimics voices", "boots fill with luminous sand", "maps redraw themselves", "umbrellas become briefly sentient"];
+    const atmospheres = ["thin sapphire haze", "warm gold mist", "pearled amethyst clouds", "deep teal aurora bands", "copper dusk vapor", "opal frost air"];
+    const descriptors = ["slow-turning", "bright-hearted", "storm-laced", "half-dreaming", "sea-polished", "humming", "velvet-dark", "strangely welcoming"];
+    const terrain = ["tides glow brighter than the local sunrise", "its valleys collect music after midnight", "light bends softly over the cliffs", "the horizon flickers with migrating storms", "its beaches sparkle like powdered glass", "the ground stores heat in hidden ribbons"];
+    const transmissions = [
+      "Survey drones report a polite atmosphere and extremely dramatic sunsets. Bring curiosity and very good boots.",
+      "Orbit remains stable, but something on the nightside keeps arranging lights into geometric invitations.",
+      "The first landing party left a kettle on a rock and returned to find tea already brewed. No one can explain this.",
+      "Sensors detected a thousand tiny reflections moving in formation across the northern sea, like a parade of stars learning to swim.",
+      "Every map of this world includes one road that does not exist until someone decides to follow it."
+    ];
+
+    const palettes = [
+      {
+        core: "#66b8ff",
+        shadow: "#2845a8",
+        glow: "rgba(102, 184, 255, 0.35)",
+        band1: "rgba(255,255,255,0.2)",
+        band2: "rgba(27,58,152,0.25)",
+        ring: "rgba(255,228,169,0.85)",
+        haze: "rgba(133, 113, 255, 0.22)",
+        moon: "#f0d9ff"
+      },
+      {
+        core: "#ffb16e",
+        shadow: "#b34545",
+        glow: "rgba(255, 177, 110, 0.34)",
+        band1: "rgba(255,240,214,0.2)",
+        band2: "rgba(116,26,26,0.2)",
+        ring: "rgba(255, 244, 189, 0.82)",
+        haze: "rgba(255, 152, 112, 0.18)",
+        moon: "#ffe1d3"
+      },
+      {
+        core: "#82f0c6",
+        shadow: "#228b7a",
+        glow: "rgba(130, 240, 198, 0.34)",
+        band1: "rgba(255,255,255,0.18)",
+        band2: "rgba(10,62,63,0.18)",
+        ring: "rgba(201,255,231,0.82)",
+        haze: "rgba(94, 216, 177, 0.16)",
+        moon: "#e7fff4"
+      },
+      {
+        core: "#cf9dff",
+        shadow: "#5e44bb",
+        glow: "rgba(207, 157, 255, 0.32)",
+        band1: "rgba(255,255,255,0.2)",
+        band2: "rgba(54,18,109,0.22)",
+        ring: "rgba(255, 224, 180, 0.82)",
+        haze: "rgba(207, 157, 255, 0.2)",
+        moon: "#f5e6ff"
+      }
+    ];
+
+    function pick(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function sampleMany(list, count) {
+      const clone = [...list];
+      const chosen = [];
+      while (chosen.length < count && clone.length) {
+        const index = Math.floor(Math.random() * clone.length);
+        chosen.push(clone.splice(index, 1)[0]);
+      }
+      return chosen;
+    }
+
+    function setMeter(node, value) {
+      node.style.width = `${value}%`;
+    }
+
+    function createChip(text) {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      chip.textContent = text;
+      return chip;
+    }
+
+    function randomPercent(min, max) {
+      return Math.floor(min + Math.random() * (max - min));
+    }
+
+    function updateTheme(palette) {
+      root.style.setProperty("--planet-core", palette.core);
+      root.style.setProperty("--planet-shadow", palette.shadow);
+      root.style.setProperty("--planet-glow", palette.glow);
+      root.style.setProperty("--band-1", palette.band1);
+      root.style.setProperty("--band-2", palette.band2);
+      root.style.setProperty("--ring", palette.ring);
+      root.style.setProperty("--sky-haze", palette.haze);
+      root.style.setProperty("--moon", palette.moon);
+
+      const ringScale = 0.88 + Math.random() * 0.34;
+      const ringTilt = -24 + Math.random() * 42;
+      ringFront.style.transform = `rotate(${ringTilt}deg) scale(${ringScale})`;
+      ringBack.style.transform = `rotate(${ringTilt}deg) scale(${ringScale})`;
+
+      if (Math.random() > 0.32) {
+        ringFront.style.opacity = "0.88";
+        ringBack.style.opacity = "0.72";
+      } else {
+        ringFront.style.opacity = "0";
+        ringBack.style.opacity = "0";
+      }
+
+      moonA.style.background = `radial-gradient(circle at 35% 30%, white, ${palette.moon})`;
+      moonB.style.background = `radial-gradient(circle at 35% 30%, white, ${palette.moon})`;
+      moonA.style.top = `${18 + Math.random() * 14}%`;
+      moonA.style.left = `${14 + Math.random() * 18}%`;
+      moonB.style.top = `${58 + Math.random() * 16}%`;
+      moonB.style.right = `${10 + Math.random() * 18}%`;
+      moonA.style.width = `${1 + Math.random() * 0.8}rem`;
+      moonB.style.width = `${0.7 + Math.random() * 0.55}rem`;
+      moonA.style.aspectRatio = "1";
+      moonB.style.aspectRatio = "1";
+
+      planet.style.animationDuration = `${18 + Math.random() * 18}s`;
+    }
+
+    function generatePlanet() {
+      const palette = pick(palettes);
+      const name = `${pick(nameLeft)}${pick(nameRight)}`;
+      const type = pick(types);
+      const atmosphere = pick(atmospheres);
+      const traitSet = sampleMany(traitsPool, 4);
+      const warningSet = sampleMany(warningsPool, 3);
+      const gravity = randomPercent(20, 92);
+      const weather = randomPercent(25, 98);
+      const mystery = randomPercent(35, 100);
+      const description = `A ${pick(descriptors)} world with a ${atmosphere}, where ${pick(terrain)}.`;
+      const reading = `Gravity: ${gravity < 40 ? "gentle" : gravity < 70 ? "steady" : "heroically inconvenient"}. Weather: ${weather < 45 ? "calm" : weather < 75 ? "ornamental chaos" : "theatrically intense"}.`;
+
+      updateTheme(palette);
+      planetName.textContent = name;
+      planetType.textContent = type;
+      planetDescription.textContent = description;
+      readingsText.textContent = reading;
+      transmission.textContent = pick(transmissions);
+
+      traits.replaceChildren(...traitSet.map(createChip));
+      warnings.replaceChildren(...warningSet.map(createChip));
+      setMeter(gravityMeter, gravity);
+      setMeter(weatherMeter, weather);
+      setMeter(mysteryMeter, mystery);
+    }
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * dpr);
+      canvas.height = Math.floor(window.innerHeight * dpr);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawStars();
+    }
+
+    function drawStars() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      const starCount = Math.max(160, Math.floor(window.innerWidth * window.innerHeight / 6500));
+      for (let i = 0; i < starCount; i += 1) {
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
+        const radius = Math.random() * 1.8;
+        const alpha = 0.35 + Math.random() * 0.65;
+        const hue = Math.random() > 0.82 ? 35 : Math.random() > 0.5 ? 200 : 260;
+        ctx.beginPath();
+        ctx.fillStyle = `hsla(${hue}, 90%, 85%, ${alpha})`;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    generateButton.addEventListener("click", generatePlanet);
+    shuffleSkyButton.addEventListener("click", drawStars);
+    window.addEventListener("resize", resizeCanvas);
+
+    resizeCanvas();
+    generatePlanet();
+  </script>
+</body>
+</html>

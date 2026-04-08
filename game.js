@@ -9,6 +9,7 @@ const marketFilters = document.querySelector("#market-filters");
 const assetGrid = document.querySelector("#asset-grid");
 const recommendationSummary = document.querySelector("#recommendation-summary");
 const recommendationList = document.querySelector("#recommendation-list");
+const topSetupCard = document.querySelector("#top-setup-card");
 const assetTemplate = document.querySelector("#asset-template");
 const recommendationTemplate = document.querySelector("#recommendation-template");
 const dashboardView = document.querySelector("#dashboard-view");
@@ -256,11 +257,115 @@ function createNewsList(headlines) {
   return fragment;
 }
 
+function formatEntryZone(asset) {
+  const bias = getSetupBias(asset);
+  const support = asset.analysis?.supportZone || "Unavailable";
+  const resistance = asset.analysis?.resistanceZone || "Unavailable";
+
+  if (bias === "Bearish") {
+    return `Near failed retest of ${resistance}`;
+  }
+
+  if (bias === "Neutral") {
+    return `${support} to ${resistance}`;
+  }
+
+  return `Near support at ${support}`;
+}
+
+function formatInvalidation(asset) {
+  const bias = getSetupBias(asset);
+  const support = asset.analysis?.supportZone || "Unavailable";
+  const resistance = asset.analysis?.resistanceZone || "Unavailable";
+
+  if (bias === "Bearish") {
+    return `Back above ${resistance}`;
+  }
+
+  return `Loss of ${support}`;
+}
+
+function getSetupBias(asset) {
+  const label = asset.analysis?.recommendation?.label || "Neutral";
+
+  if (label.includes("Bullish")) {
+    return "Bullish";
+  }
+
+  if (label === "Bearish" || label === "High risk") {
+    return "Bearish";
+  }
+
+  return "Neutral";
+}
+
 function createAnalysisChip(label, value, extraClass = "") {
   const chip = document.createElement("span");
   chip.className = `analysis-chip${extraClass ? ` ${extraClass}` : ""}`;
   chip.textContent = `${label}: ${value}`;
   return chip;
+}
+
+function renderTopSetup() {
+  const bestSetup = state.recommendations.summary?.bestSetup;
+
+  if (!bestSetup) {
+    topSetupCard.innerHTML = "<p class='meta-copy'>Top setup unavailable.</p>";
+    return;
+  }
+
+  const asset = state.assets.find((entry) => entry.ticker === bestSetup.ticker);
+  if (!asset) {
+    topSetupCard.innerHTML = "<p class='meta-copy'>Top setup unavailable.</p>";
+    return;
+  }
+
+  const bias = getSetupBias(asset);
+  const reasons = bestSetup.keyReasons.slice(0, 3);
+
+  topSetupCard.innerHTML = `
+    <div class="top-setup-head">
+      <div>
+        <div class="asset-topline">
+          <span class="asset-ticker">${asset.ticker}</span>
+          <span class="analysis-chip">${asset.type}</span>
+        </div>
+        <h3>${asset.name}</h3>
+      </div>
+      <div class="top-setup-score">
+        <strong>${bestSetup.confidence}/100</strong>
+        <p>Confidence</p>
+      </div>
+    </div>
+
+    <div class="analysis-strip">
+      <span class="analysis-chip">${bias} bias</span>
+      <span class="analysis-chip">Entry: ${formatEntryZone(asset)}</span>
+      <span class="analysis-chip">Invalidation: ${formatInvalidation(asset)}</span>
+    </div>
+
+    <div class="top-setup-meta">
+      <div class="metric-chip">
+        <span>Recommendation</span>
+        <strong>${bestSetup.label}</strong>
+      </div>
+      <div class="metric-chip">
+        <span>Timeframe</span>
+        <strong>${bestSetup.timeframe}</strong>
+      </div>
+      <div class="metric-chip">
+        <span>Trend quality</span>
+        <strong>${asset.analysis.trendQuality}</strong>
+      </div>
+    </div>
+
+    <div class="summary-panel">
+      <p class="signal-label">Why this setup leads</p>
+      <ul class="setup-reasons">
+        ${reasons.map((reason) => `<li>${reason}</li>`).join("")}
+      </ul>
+    </div>
+  `;
 }
 
 function buildSummaryCardCopy(title, item, extraText) {
@@ -380,7 +485,6 @@ function createAssetCard(asset) {
   fragment.querySelector('[data-field="price"]').textContent = formatPrice(asset.currentPrice);
   fragment.querySelector('[data-field="priceMeta"]').textContent = asset.priceContext || "Latest available market snapshot";
   fragment.querySelector('[data-field="summary"]').textContent = asset.summary;
-  fragment.querySelector('[data-field="newsSourceCount"]').textContent = `${asset.headlines.length} headlines`;
   fragment.querySelector('[data-field="recommendationLabel"]').textContent = asset.analysis.recommendation.label;
 
   decorateChange(fragment.querySelector('[data-field="dailyChange"]'), asset.dailyChangePercent);
@@ -404,7 +508,6 @@ function createAssetCard(asset) {
 
   fragment.querySelector('[data-field="bullishSignals"]').replaceChildren(createList(asset.bullishSignals));
   fragment.querySelector('[data-field="bearishSignals"]').replaceChildren(createList(asset.bearishSignals));
-  fragment.querySelector('[data-field="newsList"]').replaceChildren(createNewsList(asset.headlines));
   fragment.querySelector('[data-field="openDetail"]').addEventListener("click", () => openDetail(asset));
 
   return fragment;
@@ -530,6 +633,7 @@ async function loadDashboard() {
     headlineCountElement.textContent = String(headlineCount);
 
     renderFilters(state.assets);
+    renderTopSetup();
     renderAssets();
     renderRecommendations();
   } catch (error) {

@@ -18,56 +18,31 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="hero">
-        <div class="hero-copy">
+      <header class="top-header card">
+        <div class="header-copy">
           <p class="eyebrow">Market Dashboard</p>
           <h1>Market Dashboard</h1>
-          <p class="intro">
-            Live watchlist tracking with technical analysis, ranked setups, and
-            recent headlines.
-          </p>
+          <p id="last-updated" class="meta-copy">Loading live market data...</p>
         </div>
 
-        <div class="hero-panel">
-          <p class="panel-label">Quick Access</p>
-          <div class="hero-grid">
-            <div>
-              <p class="mini-label">Assets</p>
-              <p>ONDO, LINK, BTC, ETH, CCJ, ACHR, ASTS, UNH</p>
-            </div>
-            <div>
-              <p class="mini-label">Views</p>
-              <p>Dashboard and Recommendations</p>
-            </div>
-            <div>
-              <p class="mini-label">Data</p>
-              <p>Yahoo Finance and Google News RSS</p>
-            </div>
-            <div>
-              <p class="mini-label">Status</p>
-              <p id="last-updated" class="meta-copy">Loading live market data...</p>
-            </div>
+        <div class="header-actions">
+          <label class="search-field" for="asset-search">
+            <span>Search assets</span>
+            <input id="asset-search" type="search" placeholder="BTC, Ethereum, Archer..." />
+          </label>
+
+          <div class="tab-row" role="tablist" aria-label="Views">
+            <button id="tab-dashboard" class="tab-button is-active" type="button" role="tab" aria-selected="true">
+              Dashboard
+            </button>
+            <button id="tab-recommendations" class="tab-button" type="button" role="tab" aria-selected="false">
+              Recommendations
+            </button>
           </div>
+
+          <div id="market-filters" class="filter-row" aria-label="Asset type filters"></div>
         </div>
-      </section>
-
-      <section class="toolbar card">
-        <label class="search-field" for="asset-search">
-          <span>Search assets</span>
-          <input id="asset-search" type="search" placeholder="BTC, Ethereum, Archer..." />
-        </label>
-
-        <div class="tab-row" role="tablist" aria-label="Views">
-          <button id="tab-dashboard" class="tab-button is-active" type="button" role="tab" aria-selected="true">
-            Dashboard
-          </button>
-          <button id="tab-recommendations" class="tab-button" type="button" role="tab" aria-selected="false">
-            Recommendations
-          </button>
-        </div>
-
-        <div id="market-filters" class="filter-row" aria-label="Asset type filters"></div>
-      </section>
+      </header>
 
       <section class="overview-grid">
         <article class="stat-card card">
@@ -90,6 +65,17 @@
       </section>
 
       <section id="dashboard-view" class="view-panel">
+        <section class="top-setup-section">
+          <div class="section-heading section-heading-tight">
+            <div>
+              <p class="section-label">Top Setup Today</p>
+              <h2>Best mobile-ready read</h2>
+            </div>
+          </div>
+
+          <div id="top-setup-card" class="top-setup-card card" aria-live="polite"></div>
+        </section>
+
         <section class="assets">
           <div class="section-heading">
             <div>
@@ -176,14 +162,6 @@
         <section class="summary-panel">
           <p class="signal-label">Neutral summary</p>
           <p data-field="summary" class="summary-copy"></p>
-        </section>
-
-        <section class="news-panel">
-          <div class="chart-label-row">
-            <p>Top recent headlines</p>
-            <span data-field="newsSourceCount"></span>
-          </div>
-          <div data-field="newsList" class="news-list"></div>
         </section>
 
         <button class="detail-button" data-field="openDetail" type="button">Open detailed view</button>
